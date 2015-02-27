@@ -37,7 +37,7 @@
     <script src="http://code.jquery.com/jquery-1.11.1.js"></script>
     <script>
 
-      var room = "#indiewebcamp";
+      var room = "#indiechat";
       var hist = {};
       var socket = io();
       $('form').submit(function(){
@@ -45,24 +45,56 @@
         $('#m').val('');
         return false;
       });
+      socket.on('action', function(from, to, text, message){
+          if(hist[to] == undefined){
+            hist[to] = [];
+          }
+          hist[to].push([ from, text, message]);
+          console.log(text);
+          if(to == room){
+            actionstrip = text.match('^ACTION (.*)');
+            $('#messages').append($('<li class="action">').text(" --- "+from +" " + actionstrip[1]));
+              var objDiv = document.getElementById("chat_body");
+              objDiv.scrollTop = objDiv.scrollHeight;
+          }
+      });
       socket.on('message', function(from, to, text, message){
           if(hist[to] == undefined){
             hist[to] = [];
           }
           hist[to].push([ from, text, message]);
-          console.log(from);
-          console.log(room);
+          console.log(text);
           if(to == room){
             $('#messages').append($('<li>').text("<"+from+"> "+ text));
               var objDiv = document.getElementById("chat_body");
               objDiv.scrollTop = objDiv.scrollHeight;
           }
       });
+      socket.on('join', function(chan, nick){
+          if(chan == room){
+              $('#names').append($('<li class="'+nick+'">').text(nick));
+            }
+        });
+      socket.on('part', function(chan, nick, reason, message){
+          if(chan == room){
+              $('#names li.'+nick).remove();
+            }
+        });
+      socket.on('quit', function(nick, reason, channels, message){
+          for(var chan in channels){
+            if(chan == room){
+              $('#names li.'+nick).remove();
+            }
+          }
+        });
+
       socket.on('names', function(chan, names){
           //console.log(msg);
           if(chan == room){
+            $('#names').empty();
             for(user in names){
-              $('#names').append($('<li>').text(user));
+              //$('#names').append($('<li>').text(user));
+              $('#names').append($('<li class="'+user+'">').text(user));
             }
           }
       });

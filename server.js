@@ -4,9 +4,12 @@ var app = require('express')();
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
 var config = {
-    channels: ["#indiechat","#indiewebcamp"],
+    //channels: ["#indiechat","#indiewebcamp"],
+    userName: "Thawr",
+    realName: "Thor",
+    channels: ["#indiechat"],
     server: "irc.freenode.net",
-    botName: "thawr"
+    botName: "ben_thawr"
 };
 
 var me = config.botName;
@@ -27,6 +30,15 @@ app.get('/', function(req, res){
       res.sendFile(__dirname + '/html/index.html');
 });
 
+bot.addListener("ctcp-privmsg", function(from, to, text, message) {
+    //console.log('message received from IRC');
+    if(to == me){
+        io.emit("action", from, from, text, message);
+    } else {
+        io.emit("action", from, to, text, message);
+    }
+});
+
 bot.addListener("message", function(from, to, text, message) {
     //console.log('message received from IRC');
     if(to == me){
@@ -35,7 +47,7 @@ bot.addListener("message", function(from, to, text, message) {
         io.emit('message', from, from, text, message);
     } else {
       if (from == 'Loqi'){
-        slackmatch = msg.match('^/slack\/([^:]+): (.*)$')
+        slackmatch = text.match('^slack\/([^:]+): (.*)$')
         if(slackmatch){
             from = "slack:" +slackmatch[1];
             text = slackmatch[2];
@@ -46,6 +58,10 @@ bot.addListener("message", function(from, to, text, message) {
 });
 
 bot.addListener("join", function(channel, who) {
+    if(names[channel] == undefined){
+        names[channel] = {};
+    }
+    names[channel][who] = '';
     io.emit('join', channel, who);
 });
 
@@ -55,10 +71,18 @@ bot.addListener("names", function(channel, nicks){
 });
 
 bot.addListener("quit", function(who, reason, channels,  message) {
+    for(var channel in channels){
+        if( names  && names[channel] && names[channel][who]){
+            delete names[channel][who]
+        }
+    }
     io.emit('quit', who, reason, channels, message);
 });
 
 bot.addListener("part", function(channel, who, reason, message) {
+    if( names  && names[channel] && names[channel][who]){
+        delete names[channel][who]
+    }
     io.emit('part', channel, who, reason, message);
 });
 
