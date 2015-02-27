@@ -29,11 +29,18 @@ app.get('/', function(req, res){
 
 bot.addListener("message", function(from, to, text, message) {
     //console.log('message received from IRC');
-    if(to = me){
+    if(to == me){
         //if it is a direct message, treat it as a chat room with 
         //  room name = the other user's name
         io.emit('message', from, from, text, message);
     } else {
+      if (from == 'Loqi'){
+        slackmatch = msg.match('^/slack\/([^:]+): (.*)$')
+        if(slackmatch){
+            from = "slack:" +slackmatch[1];
+            text = slackmatch[2];
+        }
+      }
         io.emit('message', from, to, text, message);
     }
 });

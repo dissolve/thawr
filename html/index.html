@@ -37,7 +37,7 @@
     <script src="http://code.jquery.com/jquery-1.11.1.js"></script>
     <script>
 
-      var room = '#indiechat';
+      var room = "#indiewebcamp";
       var hist = {};
       var socket = io();
       $('form').submit(function(){
@@ -50,11 +50,12 @@
             hist[to] = [];
           }
           hist[to].push([ from, text, message]);
-          //console.log(message);
+          console.log(from);
+          console.log(room);
           if(to == room){
-          $('#messages').append($('<li>').text("<"+from+"> "+ text));
-            var objDiv = document.getElementById("chat_body");
-            objDiv.scrollTop = objDiv.scrollHeight;
+            $('#messages').append($('<li>').text("<"+from+"> "+ text));
+              var objDiv = document.getElementById("chat_body");
+              objDiv.scrollTop = objDiv.scrollHeight;
           }
       });
       socket.on('names', function(chan, names){
