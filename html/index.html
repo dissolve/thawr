@@ -9,6 +9,11 @@
         width:85%; height:calc(100% - 3.5em);position:fixed;
         overflow-y:scroll;
       }
+      #user_list{
+        width:14%; height:calc(100% - 3.5em);position:fixed;
+        right:0;
+        overflow-y:scroll;
+      }
       form { background: #000; padding: 3px; position: fixed; bottom: 0; width: 100%; }
       form input { border: 0; padding: 10px; width: 90%; margin-right: .5%; }
       form button { width: 9%; background: rgb(130, 224, 255); border: none; padding: 10px; }
@@ -21,6 +26,9 @@
     <div id="chat_body">
       <ul id="messages"></ul>
     </div>
+    <div id="user_list">
+      <ul id="names"></ul>
+    </div>
     <form action="">
       <input id="m" autocomplete="off" /><button>Send</button>
     </form>
@@ -28,17 +36,34 @@
     <script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
     <script src="http://code.jquery.com/jquery-1.11.1.js"></script>
     <script>
+
+      var room = '#indiechat';
+      var hist = {};
       var socket = io();
       $('form').submit(function(){
-        socket.emit('chat message', $('#m').val());
+        socket.emit('send message', room, $('#m').val());
         $('#m').val('');
         return false;
       });
-      socket.on('message', function(msg){
-          console.log(msg);
-          $('#messages').append($('<li>').text(msg));
-          var objDiv = document.getElementById("chat_body");
-          objDiv.scrollTop = objDiv.scrollHeight;
+      socket.on('message', function(from, to, text, message){
+          if(hist[to] == undefined){
+            hist[to] = [];
+          }
+          hist[to].push([ from, text, message]);
+          //console.log(message);
+          if(to == room){
+          $('#messages').append($('<li>').text("<"+from+"> "+ text));
+            var objDiv = document.getElementById("chat_body");
+            objDiv.scrollTop = objDiv.scrollHeight;
+          }
+      });
+      socket.on('names', function(chan, names){
+          //console.log(msg);
+          if(chan == room){
+            for(user in names){
+              $('#names').append($('<li>').text(user));
+            }
+          }
       });
     </script>
     <script>
